@@ -444,30 +444,33 @@
                 .replace(/^-+|-+$/g, '');       // Убираем дефисы с краёв
         }
 
-        // Кастомный рендерер для заголовков
-        const renderer = new marked.Renderer();
-        
-        renderer.heading = function(text, level, raw) {
-            // Проверяем наличие кастомного ID в формате {#custom-id}
-            const customIdMatch = raw.match(/\{#([a-z0-9-]+)\}\s*$/i);
-            let slug;
-            let cleanText = text;
-            
-            if (customIdMatch) {
-                // Используем кастомный ID
-                slug = customIdMatch[1];
-                // Убираем {#custom-id} из текста
-                cleanText = text.replace(/\s*\{#[a-z0-9-]+\}\s*$/i, '');
-            } else {
-                // Генерируем slug из текста
-                slug = createSlug(raw);
+        // Кастомный рендерер для заголовков (правильный формат для marked.js v9+)
+        const renderer = {
+            heading(text, level, raw, slugger) {
+                // raw может быть объектом токена или строкой
+                const rawText = typeof raw === 'string' ? raw : (raw?.text || text);
+                
+                // Проверяем наличие кастомного ID в формате {#custom-id}
+                const customIdMatch = rawText.match(/\{#([a-z0-9-]+)\}\s*$/i);
+                let slug;
+                let cleanText = text;
+                
+                if (customIdMatch) {
+                    // Используем кастомный ID
+                    slug = customIdMatch[1];
+                    // Убираем {#custom-id} из текста
+                    cleanText = text.replace(/\s*\{#[a-z0-9-]+\}\s*$/i, '');
+                } else {
+                    // Генерируем slug из текста
+                    slug = createSlug(rawText);
+                }
+                
+                return `<h${level} id="${slug}">${cleanText}</h${level}>\n`;
             }
-            
-            return `<h${level} id="${slug}">${cleanText}</h${level}>\n`;
         };
 
         // Конфигурация marked.js
-        marked.setOptions({
+        marked.use({ 
             breaks: true,
             gfm: true,
             renderer: renderer,
