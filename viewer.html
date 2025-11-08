@@ -444,36 +444,11 @@
                 .replace(/^-+|-+$/g, '');       // Убираем дефисы с краёв
         }
 
-        // Кастомный рендерер для заголовков (правильный формат для marked.js v9+)
-        const renderer = {
-            heading(text, level, raw, slugger) {
-                // raw может быть объектом токена или строкой
-                const rawText = typeof raw === 'string' ? raw : (raw?.text || text);
-                
-                // Проверяем наличие кастомного ID в формате {#custom-id}
-                const customIdMatch = rawText.match(/\{#([a-z0-9-]+)\}\s*$/i);
-                let slug;
-                let cleanText = text;
-                
-                if (customIdMatch) {
-                    // Используем кастомный ID
-                    slug = customIdMatch[1];
-                    // Убираем {#custom-id} из текста
-                    cleanText = text.replace(/\s*\{#[a-z0-9-]+\}\s*$/i, '');
-                } else {
-                    // Генерируем slug из текста
-                    slug = createSlug(rawText);
-                }
-                
-                return `<h${level} id="${slug}">${cleanText}</h${level}>\n`;
-            }
-        };
-
-        // Конфигурация marked.js
-        marked.use({ 
+        // Простая конфигурация marked.js без кастомных рендереров
+        marked.setOptions({
             breaks: true,
             gfm: true,
-            renderer: renderer,
+            headerIds: false,  // Отключаем автоматическую генерацию ID
             mangle: false
         });
         
@@ -487,6 +462,34 @@
             synopsis: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
         };
         
+        // Функция для добавления ID к заголовкам после рендеринга
+        function addHeaderIds(htmlContent) {
+            const div = document.createElement('div');
+            div.innerHTML = htmlContent;
+            
+            // Обрабатываем все заголовки H1-H6
+            const headings = div.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            
+            headings.forEach(heading => {
+                const text = heading.textContent;
+                
+                // Проверяем наличие кастомного ID в формате {#custom-id}
+                const customIdMatch = text.match(/\{#([a-z0-9-]+)\}\s*$/i);
+                
+                if (customIdMatch) {
+                    // Используем кастомный ID
+                    heading.id = customIdMatch[1];
+                    // Убираем {#custom-id} из текста
+                    heading.textContent = text.replace(/\s*\{#[a-z0-9-]+\}\s*$/i, '');
+                } else {
+                    // Генерируем slug из текста
+                    heading.id = createSlug(text);
+                }
+            });
+            
+            return div.innerHTML;
+        }
+        
         // Загрузка и рендеринг markdown
         async function loadMarkdown(fileKey) {
             const contentDiv = document.getElementById('content');
@@ -498,7 +501,10 @@
                 
                 const markdown = await response.text();
                 const html = marked.parse(markdown);
-                const cleanHtml = DOMPurify.sanitize(html);
+                
+                // Добавляем ID к заголовкам ПЕРЕД санитизацией
+                const htmlWithIds = addHeaderIds(html);
+                const cleanHtml = DOMPurify.sanitize(htmlWithIds);
                 
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
                 
