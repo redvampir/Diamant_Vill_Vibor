@@ -433,11 +433,44 @@
     <div class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</div>
     
     <script>
+        // Функция для создания slug из кириллического текста
+        function createSlug(text) {
+            return text
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')           // Пробелы → дефисы
+                .replace(/[^\wа-яё-]/gi, '-')   // Оставляем буквы, цифры, дефисы (включая кириллицу)
+                .replace(/--+/g, '-')           // Множественные дефисы → один
+                .replace(/^-+|-+$/g, '');       // Убираем дефисы с краёв
+        }
+
+        // Кастомный рендерер для заголовков
+        const renderer = new marked.Renderer();
+        
+        renderer.heading = function(text, level, raw) {
+            // Проверяем наличие кастомного ID в формате {#custom-id}
+            const customIdMatch = raw.match(/\{#([a-z0-9-]+)\}\s*$/i);
+            let slug;
+            let cleanText = text;
+            
+            if (customIdMatch) {
+                // Используем кастомный ID
+                slug = customIdMatch[1];
+                // Убираем {#custom-id} из текста
+                cleanText = text.replace(/\s*\{#[a-z0-9-]+\}\s*$/i, '');
+            } else {
+                // Генерируем slug из текста
+                slug = createSlug(raw);
+            }
+            
+            return `<h${level} id="${slug}">${cleanText}</h${level}>\n`;
+        };
+
         // Конфигурация marked.js
         marked.setOptions({
             breaks: true,
             gfm: true,
-            headerIds: true,
+            renderer: renderer,
             mangle: false
         });
         
