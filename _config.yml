@@ -1,25 +1,17 @@
 title: Диамант Вилл - Материалы
 description: Глоссарий и синопсис научно-фантастического произведения "Диамант Вилл: Выбор"
-theme: jekyll-theme-cayman
-show_downloads: false
 
+# Отключаем Jekyll для HTML файлов
 markdown: kramdown
 kramdown:
   input: GFM
   hard_wrap: false
   auto_ids: true
-  syntax_highlighter: rouge
 
-plugins:
-  - jekyll-relative-links
-
-relative_links:
-  enabled: true
-  collections: false
-
+# Разрешаем HTML файлы
 include:
-  - Доп.материалы/Глосарий_3.md
-  - Доп.материалы/СИНОПСИС_2.md
+  - index.html
+  - Доп.материалы/
 
 exclude:
   - Книга 1/
