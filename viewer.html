@@ -14,21 +14,27 @@
         }
         
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --bg-dark: #1a1a2e;
-            --bg-light: #f8f9fa;
-            --text-dark: #2d3748;
-            --text-light: #ffffff;
-            --border: #e2e8f0;
-            --accent: #4299e1;
+            /* Тёмная готическая палитра */
+            --primary: #8b5cf6;        /* Фиолетовый */
+            --secondary: #4c1d95;      /* Тёмно-фиолетовый */
+            --bg-dark: #0f0f23;        /* Почти чёрный */
+            --bg-medium: #1a1a2e;      /* Тёмно-серый */
+            --bg-light: #16213e;       /* Серо-синий */
+            --text-dark: #e2e8f0;      /* Светло-серый для текста */
+            --text-light: #ffffff;     /* Белый */
+            --text-muted: #94a3b8;     /* Приглушённый серый */
+            --border: #2d3748;         /* Тёмная граница */
+            --accent: #a78bfa;         /* Светло-фиолетовый акцент */
+            --accent-hover: #c4b5fd;   /* Ещё светлее при наведении */
+            --card-bg: #1e293b;        /* Фон карточек */
+            --shadow: rgba(0, 0, 0, 0.5); /* Тени */
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             line-height: 1.6;
             color: var(--text-dark);
-            background: var(--bg-light);
+            background: var(--bg-dark);
         }
         
         /* Навигация */
@@ -93,7 +99,7 @@
         }
         
         .btn-primary:hover {
-            background: #3182ce;
+            background: var(--accent-hover);
         }
         
         /* Боковая панель навигации */
@@ -106,7 +112,7 @@
         
         .sidebar {
             width: 300px;
-            background: white;
+            background: var(--card-bg);
             border-right: 1px solid var(--border);
             padding: 2rem 1rem;
             overflow-y: auto;
@@ -117,7 +123,7 @@
         
         .sidebar h3 {
             margin-bottom: 1rem;
-            color: var(--primary);
+            color: var(--accent);
             font-size: 1.1rem;
         }
         
@@ -130,7 +136,7 @@
         }
         
         .toc a {
-            color: var(--text-dark);
+            color: var(--text-muted);
             text-decoration: none;
             padding: 0.3rem 0.5rem;
             display: block;
@@ -140,8 +146,8 @@
         }
         
         .toc a:hover {
-            background: var(--bg-light);
-            color: var(--primary);
+            background: var(--bg-medium);
+            color: var(--accent);
             padding-left: 1rem;
         }
         
@@ -155,10 +161,10 @@
         .main-content {
             flex: 1;
             padding: 2rem;
-            background: white;
+            background: var(--bg-light);
             margin: 2rem;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px var(--shadow);
         }
         
         /* Индикатор загрузки */
@@ -174,7 +180,7 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 4px solid var(--bg-light);
+            border: 4px solid var(--border);
             border-top: 4px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -202,19 +208,19 @@
         .markdown-body h2 {
             font-size: 2em;
             margin: 1.5em 0 0.5em;
-            color: var(--secondary);
+            color: var(--accent);
         }
         
         .markdown-body h3 {
             font-size: 1.5em;
             margin: 1.2em 0 0.5em;
-            color: var(--text-dark);
+            color: var(--text-muted);
         }
         
         .markdown-body h4 {
             font-size: 1.2em;
             margin: 1em 0 0.5em;
-            color: var(--text-dark);
+            color: var(--text-muted);
         }
         
         .markdown-body p {
@@ -233,7 +239,7 @@
         .markdown-body blockquote {
             margin: 1.5em 0;
             padding: 1em 1.5em;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(76, 29, 149, 0.15) 100%);
             border-left: 4px solid var(--primary);
             border-radius: 4px;
         }
@@ -259,30 +265,32 @@
         }
         
         .markdown-body tr:nth-child(even) {
-            background: var(--bg-light);
+            background: var(--card-bg);
         }
         
         .markdown-body code {
-            background: var(--bg-light);
+            background: var(--card-bg);
             padding: 0.2em 0.4em;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
+            color: var(--accent);
         }
         
         .markdown-body pre {
             background: var(--bg-dark);
-            color: #a0aec0;
+            color: var(--text-muted);
             padding: 1em;
             border-radius: 6px;
             overflow-x: auto;
             margin: 1.5em 0;
+            border: 1px solid var(--border);
         }
         
         .markdown-body pre code {
             background: transparent;
             padding: 0;
-            color: #a0aec0;
+            color: var(--text-muted);
         }
         
         .markdown-body a {
@@ -342,13 +350,19 @@
             border: 2px solid var(--border);
             border-radius: 6px;
             font-size: 0.9rem;
+            background: var(--bg-medium);
+            color: var(--text-dark);
             transition: all 0.3s;
+        }
+        
+        .search-box input::placeholder {
+            color: var(--text-muted);
         }
         
         .search-box input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
         
         .search-icon {
@@ -356,7 +370,7 @@
             right: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #a0aec0;
+            color: var(--text-muted);
         }
         
         /* Мобильная адаптация */
@@ -567,9 +581,12 @@
             document.querySelectorAll('.markdown-body a[href^="#"]').forEach(link => {
                 link.onclick = (e) => {
                     e.preventDefault();
-                    const target = document.querySelector(link.getAttribute('href'));
+                    const targetId = link.getAttribute('href').substring(1); // Убираем #
+                    const target = document.getElementById(targetId); // Используем getElementById вместо querySelector
                     if (target) {
                         target.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        console.warn('Якорь не найден:', targetId);
                     }
                 };
             });
