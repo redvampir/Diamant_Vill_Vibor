@@ -581,8 +581,8 @@
             document.querySelectorAll('.markdown-body a[href^="#"]').forEach(link => {
                 link.onclick = (e) => {
                     e.preventDefault();
-                    const targetId = link.getAttribute('href').substring(1); // Убираем #
-                    const target = document.getElementById(targetId); // Используем getElementById вместо querySelector
+                    const targetId = decodeURIComponent(link.getAttribute('href').substring(1)); // Декодируем URL-кодированные символы
+                    const target = document.getElementById(targetId);
                     if (target) {
                         target.scrollIntoView({ behavior: 'smooth' });
                     } else {
@@ -636,6 +636,32 @@
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        
+        // Обработка hash в URL при загрузке/обновлении страницы
+        window.addEventListener('hashchange', () => {
+            if (window.location.hash) {
+                const targetId = decodeURIComponent(window.location.hash.substring(1));
+                const target = document.getElementById(targetId);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }, 100); // Даём время на рендер
+                }
+            }
+        });
+        
+        // Прокрутка к якорю при первой загрузке
+        window.addEventListener('load', () => {
+            if (window.location.hash) {
+                const targetId = decodeURIComponent(window.location.hash.substring(1));
+                const target = document.getElementById(targetId);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }, 300); // Даём больше времени для полной загрузки контента
+                }
+            }
+        });
         
         // Инициализация
         loadMarkdown(fileParam);
