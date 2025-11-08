@@ -1,0 +1,35 @@
+title: Диамант Вилл - Материалы
+description: Глоссарий и синопсис научно-фантастического произведения "Диамант Вилл: Выбор"
+theme: jekyll-theme-cayman
+show_downloads: false
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - Доп.материалы/Глосарий_3.md
+  - Доп.материалы/СИНОПСИС_2.md
+
+exclude:
+  - Книга 1/
+  - convert_docx.py
+  - лан_ниги.md
+  - Доп.материалы/Глосарий.md
+  - Доп.материалы/Глосарий_2.md
+  - Доп.материалы/ВВОДНАЯ_*.md
+  - Доп.материалы/План_*.md
+  - Доп.материалы/Черновик_*.md
+  - Доп.материалы/Глава_*.md
+  - Доп.материалы/Обсуждение_*.md
+  - Доп.материалы/Разбор_*.md
