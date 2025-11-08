@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диамант Вилл - Просмотр</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg-dark: #1a1a2e;
+            --bg-light: #f8f9fa;
+            --text-dark: #2d3748;
+            --text-light: #ffffff;
+            --border: #e2e8f0;
+            --accent: #4299e1;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+        
+        /* Навигация */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .navbar-brand {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .navbar-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-light {
+            background: rgba(255,255,255,0.2);
+            color: var(--text-light);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .btn-light:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+        
+        /* Боковая панель навигации */
+        .container {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: calc(100vh - 70px);
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            position: sticky;
+            top: 70px;
+            height: calc(100vh - 70px);
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .toc {
+            list-style: none;
+        }
+        
+        .toc li {
+            margin: 0.5rem 0;
+        }
+        
+        .toc a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 0.3rem 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .toc a:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+            padding-left: 1rem;
+        }
+        
+        .toc .active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text-light);
+            padding-left: 1rem;
+        }
+        
+        /* Основной контент */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            background: white;
+            margin: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        /* Индикатор загрузки */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            gap: 1rem;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--bg-light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Стили для markdown контента */
+        .markdown-body {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .markdown-body h1 {
+            font-size: 2.5em;
+            margin: 1em 0 0.5em;
+            padding-bottom: 0.3em;
+            border-bottom: 2px solid var(--border);
+            color: var(--primary);
+        }
+        
+        .markdown-body h2 {
+            font-size: 2em;
+            margin: 1.5em 0 0.5em;
+            color: var(--secondary);
+        }
+        
+        .markdown-body h3 {
+            font-size: 1.5em;
+            margin: 1.2em 0 0.5em;
+            color: var(--text-dark);
+        }
+        
+        .markdown-body h4 {
+            font-size: 1.2em;
+            margin: 1em 0 0.5em;
+            color: var(--text-dark);
+        }
+        
+        .markdown-body p {
+            margin: 1em 0;
+        }
+        
+        .markdown-body ul, .markdown-body ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        
+        .markdown-body li {
+            margin: 0.5em 0;
+        }
+        
+        .markdown-body blockquote {
+            margin: 1.5em 0;
+            padding: 1em 1.5em;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+        }
+        
+        .markdown-body table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5em 0;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        .markdown-body th, .markdown-body td {
+            border: 1px solid var(--border);
+            padding: 0.8em 1em;
+            text-align: left;
+        }
+        
+        .markdown-body th {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        
+        .markdown-body tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+        
+        .markdown-body code {
+            background: var(--bg-light);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .markdown-body pre {
+            background: var(--bg-dark);
+            color: #a0aec0;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5em 0;
+        }
+        
+        .markdown-body pre code {
+            background: transparent;
+            padding: 0;
+            color: #a0aec0;
+        }
+        
+        .markdown-body a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .markdown-body a:hover {
+            border-bottom: 1px solid var(--accent);
+        }
+        
+        .markdown-body hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 2em 0;
+        }
+        
+        /* Кнопка "Вверх" */
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text-light);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            font-size: 1.5rem;
+        }
+        
+        .scroll-top.visible {
+            opacity: 1;
+        }
+        
+        .scroll-top:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Поиск */
+        .search-box {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.7rem 2.5rem 0.7rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .navbar-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        
+        /* Анимация появления контента */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .markdown-body {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="navbar-brand">
+                <span>📚</span>
+                <span>Диамант Вилл: Выбор</span>
+            </a>
+            <div class="navbar-controls">
+                <button class="btn btn-light" onclick="changeFile('glossary')">📖 Глоссарий</button>
+                <button class="btn btn-light" onclick="changeFile('synopsis')">📝 Синопсис</button>
+                <a href="index.html" class="btn btn-primary">🏠 Главная</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Поиск по странице...">
+                <span class="search-icon">🔍</span>
+            </div>
+            <h3>Содержание</h3>
+            <ul class="toc" id="toc"></ul>
+        </aside>
+        
+        <!-- Основной контент -->
+        <main class="main-content">
+            <div id="content" class="loading">
+                <div class="spinner"></div>
+                <p>Загрузка контента...</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Кнопка "Вверх" -->
+    <div class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</div>
+    
+    <script>
+        // Конфигурация marked.js
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false
+        });
+        
+        // Получаем параметр из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileParam = urlParams.get('file') || 'glossary';
+        
+        // Пути к файлам (сырые с GitHub)
+        const files = {
+            glossary: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/Глосарий_3.md',
+            synopsis: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
+        };
+        
+        // Загрузка и рендеринг markdown
+        async function loadMarkdown(fileKey) {
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка контента...</p></div>';
+            
+            try {
+                const response = await fetch(files[fileKey]);
+                if (!response.ok) throw new Error('Ошибка загрузки файла');
+                
+                const markdown = await response.text();
+                const html = marked.parse(markdown);
+                const cleanHtml = DOMPurify.sanitize(html);
+                
+                contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
+                
+                // Генерируем оглавление
+                generateTOC();
+                
+                // Настраиваем якорные ссылки
+                setupAnchorLinks();
+                
+                // Подсветка кода (если есть)
+                highlightCode();
+                
+            } catch (error) {
+                contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <h2 style="color: #e53e3e;">⚠️ Ошибка загрузки</h2>
+                        <p>Не удалось загрузить файл. Попробуйте обновить страницу.</p>
+                        <p style="color: #a0aec0; font-size: 0.9rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Генерация оглавления
+        function generateTOC() {
+            const toc = document.getElementById('toc');
+            const headings = document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3');
+            
+            toc.innerHTML = '';
+            
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName[1]);
+                const text = heading.textContent;
+                const id = heading.id || `heading-${index}`;
+                
+                if (!heading.id) heading.id = id;
+                
+                const li = document.createElement('li');
+                li.style.paddingLeft = `${(level - 1) * 0.8}rem`;
+                
+                const a = document.createElement('a');
+                a.href = `#${id}`;
+                a.textContent = text;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Подсветка активного пункта
+                    document.querySelectorAll('.toc a').forEach(link => link.classList.remove('active'));
+                    a.classList.add('active');
+                };
+                
+                li.appendChild(a);
+                toc.appendChild(li);
+            });
+        }
+        
+        // Настройка якорных ссылок
+        function setupAnchorLinks() {
+            document.querySelectorAll('.markdown-body a[href^="#"]').forEach(link => {
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+            });
+        }
+        
+        // Подсветка кода (простая)
+        function highlightCode() {
+            document.querySelectorAll('pre code').forEach(block => {
+                // Здесь можно добавить библиотеку подсветки синтаксиса
+                block.style.display = 'block';
+            });
+        }
+        
+        // Смена файла
+        function changeFile(fileKey) {
+            window.location.search = `?file=${fileKey}`;
+        }
+        
+        // Поиск по странице
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const content = document.querySelector('.markdown-body');
+            
+            if (searchTerm.length < 2) {
+                // Сбросить подсветку
+                return;
+            }
+            
+            // Простой поиск (можно улучшить)
+            const textContent = content.textContent.toLowerCase();
+            if (textContent.includes(searchTerm)) {
+                // Найдено - можно подсветить
+                window.find(searchTerm);
+            }
+        });
+        
+        // Кнопка "Вверх"
+        const scrollTopBtn = document.getElementById('scrollTop');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Инициализация
+        loadMarkdown(fileParam);
+    </script>
+</body>
+</html>
