@@ -54,6 +54,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 2rem;
+            flex-wrap: wrap; /* allow wrapping on narrow screens */
         }
         
         .navbar-brand {
@@ -198,16 +199,17 @@
         }
         
         .markdown-body h1 {
-            font-size: 2.5em;
-            margin: 1em 0 0.5em;
+            font-size: 2.2em;
+            margin: 0.8em 0 0.5em;
             padding-bottom: 0.3em;
             border-bottom: 2px solid var(--border);
             color: var(--primary);
+            word-break: break-word; /* avoid overflow on long titles */
         }
         
         .markdown-body h2 {
-            font-size: 2em;
-            margin: 1.5em 0 0.5em;
+            font-size: 1.8em;
+            margin: 1.3em 0 0.5em;
             color: var(--accent);
         }
         
@@ -374,20 +376,40 @@
         }
         
         /* Мобильная адаптация */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
             .sidebar {
-                display: none;
+                width: auto;
+                position: static;
+                height: auto;
+                display: block;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+                margin: 0 1rem;
             }
-            
+            .main-content { margin: 1rem; }
+            .navbar-content { gap: 0.75rem; }
+            .navbar-controls { flex-wrap: wrap; }
+        }
+
+        @media (max-width: 768px) {
             .main-content {
-                margin: 1rem;
+                margin: 0.75rem;
                 padding: 1rem;
             }
-            
-            .navbar-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
+            .navbar { padding: 0.75rem 1rem; }
+            .navbar-content { flex-direction: column; align-items: stretch; }
+            .navbar-controls { width: 100%; justify-content: center; gap: 0.5rem; }
+            .btn { font-size: 0.9rem; padding: 0.45rem 0.8rem; }
+            .markdown-body h1 { font-size: 1.6em; margin-top: 0.6em; }
+            .markdown-body h2 { font-size: 1.3em; }
+            .markdown-body h3 { font-size: 1.1em; }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-controls { display: grid; grid-template-columns: 1fr; }
+            .btn { width: 100%; text-align: center; }
         }
         
         /* Анимация появления контента */
