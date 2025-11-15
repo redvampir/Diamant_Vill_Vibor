@@ -19,7 +19,7 @@
 
 ## 🚀 GitHub Pages
 
-Сайт с материалами доступен по адресу: **[https://redvampir.github.io/Diamant_Vill_Vibor/](https://github.com)**
+Сайт с материалами доступен по адресу: **[https://redvampir.github.io/Diamant_Vill_Vibor/](https://redvampir.github.io/Diamant_Vill_Vibor/)**
 
 ## 📝 Структура мира
 

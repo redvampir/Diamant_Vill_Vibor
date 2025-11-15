@@ -23,7 +23,7 @@ cd "f:\Мои Книги\Диамант Вилл"
 git branch -M main
 
 # Добавить remote (заменить YOUR-USERNAME на ваш GitHub username)
-git remote add origin https://github.com/YOUR-USERNAME/diamant-will.git
+git remote add origin https://github.com/redvampir/Diamant_Vill_Vibor.git
 
 # Загрузить код на GitHub
 git push -u origin main
@@ -40,17 +40,17 @@ git push -u origin main
 5. Подождать 1-2 минуты
 6. Обновить страницу — появится ссылка на сайт:
    ```
-   Your site is live at https://YOUR-USERNAME.github.io/diamant-will/
+   Your site is live at https://redvampir.github.io/Diamant_Vill_Vibor/
    ```
 
 ## Шаг 4: Проверить сайт
 
-Перейти по ссылке `https://YOUR-USERNAME.github.io/diamant-will/`
+Перейти по ссылке `https://redvampir.github.io/Diamant_Vill_Vibor/`
 
 Должны быть доступны:
 - **Главная страница:** https://YOUR-USERNAME.github.io/diamant-will/
-- **Глоссарий:** https://YOUR-USERNAME.github.io/diamant-will/Доп.материалы/Глосарий_3
-- **Синопсис:** https://YOUR-USERNAME.github.io/diamant-will/Доп.материалы/СИНОПСИС_2
+- **Глоссарий:** https://redvampir.github.io/Diamant_Vill_Vibor/Доп.материалы/Глосарий_3
+- **Синопсис:** https://redvampir.github.io/Diamant_Vill_Vibor/Доп.материалы/СИНОПСИС_2
 
 ## 📝 Как обновлять сайт
 
