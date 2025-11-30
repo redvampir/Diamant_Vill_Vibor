@@ -76,6 +76,27 @@
             align-items: center;
             gap: 0.5rem;
         }
+
+        /* Контрастные контуры без сдвига контента */
+        .btn,
+        .navbar-brand,
+        .toc a,
+        .scroll-top {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+
+        .btn:focus-visible,
+        .navbar-brand:focus-visible,
+        .toc a:focus-visible,
+        .scroll-top:focus-visible {
+            outline: 2px solid var(--accent-hover);
+            box-shadow: 0 0 0 4px rgba(255, 183, 77, 0.2);
+        }
+
+        .scroll-top:focus-visible {
+            box-shadow: 0 10px 24px rgba(229, 57, 53, 0.3), 0 0 0 4px rgba(255, 183, 77, 0.2);
+        }
         
         .navbar-controls {
             display: flex;
