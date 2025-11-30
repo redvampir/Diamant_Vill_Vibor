@@ -209,10 +209,9 @@
         /* Основной контент */
         .main-content {
             flex: 1;
-            padding: 2rem;
-            padding-top: calc(2rem + var(--header-offset));
+            padding: 1.5rem;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0) 40%), var(--bg-light);
-            margin: 2rem;
+            margin: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 10px 30px var(--shadow);
             border: 1px solid rgba(255, 112, 67, 0.2);
@@ -559,9 +558,8 @@
                 box-shadow: none;
             }
             .main-content {
-                margin: 0;
-                padding: 0.4rem;
-                padding-top: calc(0.4rem + var(--header-offset));
+                margin: 0.75rem;
+                padding: 1rem;
                 max-width: 100%;
                 box-sizing: border-box;
             }
@@ -585,15 +583,14 @@
             }
 
             .main-content {
-                margin: 0;
-                padding: 0.35rem 0.45rem;
-                padding-top: calc(0.35rem + var(--header-offset));
+                margin: 0.5rem;
+                padding: 0.75rem;
             }
             .sidebar {
-                margin: 0;
+                margin: 0.5rem;
                 padding: 0.35rem 0.4rem;
             }
-            .navbar { 
+            .navbar {
                 padding: 0.65rem 0.85rem;
                 position: static;
                 top: auto;
@@ -629,8 +626,24 @@
         @media (max-width: 480px) {
             .navbar-controls { display: grid; grid-template-columns: 1fr; }
             .btn { width: 100%; text-align: center; }
+            .main-content { margin: 0.4rem; padding: 0.65rem; }
         }
         
+        /* Индикатор источника данных */
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.65rem;
+            margin-bottom: 0.75rem;
+            background: rgba(255, 143, 0, 0.12);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 112, 67, 0.35);
+            border-radius: 999px;
+            font-size: 0.82rem;
+            width: fit-content;
+        }
+
         /* Анимация появления контента */
         @keyframes fadeIn {
             from {
@@ -817,16 +830,50 @@
         const urlParams = new URLSearchParams(window.location.search);
         const fileParam = urlParams.get('file') || 'glossary';
 
-        // Пути к файлам (сырые с GitHub)
-        const files = {
-            glossary: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/Глосарий_3.md',
-            synopsis: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
+        // Пути к файлам (локальные с приоритетом, удалённые — резерв)
+        const fileSources = {
+            glossary: {
+                local: './Доп.материалы/Глосарий_3.md',
+                remote: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/Глосарий_3.md'
+            },
+            synopsis: {
+                local: './Доп.материалы/СИНОПСИС_2.md',
+                remote: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
+            }
         };
 
-        const localFiles = {
-            glossary: '/Доп.материалы/Глосарий_3.md',
-            synopsis: '/Доп.материалы/СИНОПСИС_2.md'
+        // Минимальные тестовые данные для локального запуска (Playwright/CI)
+        const testFileSources = {
+            glossary: {
+                local: './tests/fixtures/glossary.md'
+            },
+            synopsis: {
+                local: './tests/fixtures/synopsis.md'
+            }
         };
+
+        function isLocalhost() {
+            const host = window.location.hostname;
+            return host === 'localhost' || host === '127.0.0.1';
+        }
+
+        function buildSourceAttempts(fileKey) {
+            const attempts = [];
+
+            if (isLocalhost() && testFileSources[fileKey]?.local) {
+                attempts.push({ label: 'Тестовая версия', url: testFileSources[fileKey].local, attempts: 1 });
+            }
+
+            if (fileSources[fileKey]?.local) {
+                attempts.push({ label: 'Локальная версия', url: fileSources[fileKey].local, attempts: 2 });
+            }
+
+            if (fileSources[fileKey]?.remote) {
+                attempts.push({ label: 'Удалённая версия', url: fileSources[fileKey].remote, attempts: 3 });
+            }
+
+            return attempts;
+        }
 
         let tocObserver;
         let headingsCache = [];
@@ -977,40 +1024,40 @@
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка контента...</p></div>';
 
-            if (!files[fileKey]) {
+            const sources = fileSources[fileKey];
+
+            if (!sources) {
                 renderError({
                     title: '⚠️ Неизвестный файл',
-                    message: `Ключ файла «${fileKey}» не поддерживается. Доступные значения: ${Object.keys(files).join(', ')}.`,
+                    message: `Ключ файла «${fileKey}» не поддерживается. Доступные значения: ${Object.keys(fileSources).join(', ')}.`,
                     details: 'Убедитесь, что параметр ?file задан корректно.'
                 });
                 return;
             }
 
             try {
-                const remoteUrl = files[fileKey];
-                const localUrl = localFiles[fileKey];
                 let markdown;
                 let sourceLabel = '';
+                const attempts = buildSourceAttempts(fileKey);
+                const errors = [];
 
-                try {
-                    const response = await fetchWithRetry(remoteUrl, 3, 400);
-                    markdown = await response.text();
-                    sourceLabel = 'Удалённая версия';
-                } catch (remoteError) {
-                    if (!localUrl) throw remoteError;
+                if (!attempts.length) {
+                    throw new Error('Нет доступных источников для загрузки файла');
+                }
 
+                for (const attempt of attempts) {
                     try {
-                        const fallbackResponse = await fetchWithRetry(localUrl, 2, 400);
-                        markdown = await fallbackResponse.text();
-                        sourceLabel = 'Локальный файл (резерв)';
-                    } catch (fallbackError) {
-                        const details = [
-                            'Основной источник: ' + formatErrorDetails(remoteError),
-                            'Резервный источник: ' + formatErrorDetails(fallbackError)
-                        ].join(' || ');
-
-                        throw new Error(details);
+                        const response = await fetchWithRetry(attempt.url, attempt.attempts, 400);
+                        markdown = await response.text();
+                        sourceLabel = attempt.label;
+                        break;
+                    } catch (sourceError) {
+                        errors.push(`${attempt.label}: ${formatErrorDetails(sourceError)}`);
                     }
+                }
+
+                if (!markdown) {
+                    throw new Error(errors.join(' || '));
                 }
 
                 const html = marked.parse(markdown);
@@ -1025,10 +1072,8 @@
 
                 if (sourceLabel) {
                     const notice = document.createElement('div');
+                    notice.className = 'source-badge';
                     notice.textContent = sourceLabel;
-                    notice.style.fontSize = '0.85rem';
-                    notice.style.color = '#718096';
-                    notice.style.marginBottom = '0.5rem';
                     contentDiv.prepend(notice);
                 }
 
