@@ -209,10 +209,9 @@
         /* Основной контент */
         .main-content {
             flex: 1;
-            padding: 2rem;
-            padding-top: calc(2rem + var(--header-offset));
+            padding: 1.5rem;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0) 40%), var(--bg-light);
-            margin: 2rem;
+            margin: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 10px 30px var(--shadow);
             border: 1px solid rgba(255, 112, 67, 0.2);
@@ -559,9 +558,8 @@
                 box-shadow: none;
             }
             .main-content {
-                margin: 0;
-                padding: 0.4rem;
-                padding-top: calc(0.4rem + var(--header-offset));
+                margin: 0.75rem;
+                padding: 1rem;
                 max-width: 100%;
                 box-sizing: border-box;
             }
@@ -585,15 +583,14 @@
             }
 
             .main-content {
-                margin: 0;
-                padding: 0.35rem 0.45rem;
-                padding-top: calc(0.35rem + var(--header-offset));
+                margin: 0.5rem;
+                padding: 0.75rem;
             }
             .sidebar {
-                margin: 0;
+                margin: 0.5rem;
                 padding: 0.35rem 0.4rem;
             }
-            .navbar { 
+            .navbar {
                 padding: 0.65rem 0.85rem;
                 position: static;
                 top: auto;
@@ -629,6 +626,7 @@
         @media (max-width: 480px) {
             .navbar-controls { display: grid; grid-template-columns: 1fr; }
             .btn { width: 100%; text-align: center; }
+            .main-content { margin: 0.4rem; padding: 0.65rem; }
         }
         
         /* Индикатор источника данных */
