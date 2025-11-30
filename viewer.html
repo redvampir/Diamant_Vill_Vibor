@@ -593,7 +593,7 @@
                 margin: 0;
                 padding: 0.35rem 0.4rem;
             }
-            .navbar {
+            .navbar { 
                 padding: 0.65rem 0.85rem;
                 position: static;
                 top: auto;
@@ -601,7 +601,18 @@
             .navbar-content { flex-direction: column; align-items: stretch; }
             .navbar-controls { width: 100%; justify-content: center; gap: 0.5rem; }
             .btn { font-size: 0.9rem; padding: 0.45rem 0.8rem; }
-            .table-scroll { padding: 0.45rem 0.5rem; margin: 0.9rem 0; }
+            .table-scroll {
+                padding: 0.45rem 0.5rem;
+                margin: 0.9rem 0;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .table-scroll table {
+                width: 100%;
+                min-width: 100%;
+                table-layout: fixed;
+            }
             .markdown-body th, .markdown-body td {
                 padding: 0.5em;
                 word-break: break-word;
