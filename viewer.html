@@ -294,18 +294,54 @@
             color: var(--text-dark);
         }
         
-        .markdown-body table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1.5em 0;
+        .table-scroll {
+            position: relative;
             overflow-x: auto;
-            display: block;
+            padding: 0.75em;
+            margin: 1.5em 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)) var(--card-bg);
+            border-radius: 10px;
+            box-shadow: inset 0 0 0 1px var(--border), 0 8px 18px rgba(0, 0, 0, 0.25);
         }
-        
+
+        .table-scroll::before,
+        .table-scroll::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 28px;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .table-scroll::before {
+            left: 0;
+            background: linear-gradient(90deg, rgba(255, 112, 67, 0.25), rgba(255, 112, 67, 0));
+        }
+
+        .table-scroll::after {
+            right: 0;
+            background: linear-gradient(-90deg, rgba(255, 112, 67, 0.25), rgba(255, 112, 67, 0));
+        }
+
+        .table-scroll.has-left::before { opacity: 1; }
+        .table-scroll.has-right::after { opacity: 1; }
+
+        .table-scroll table {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+            margin: 0;
+        }
+
         .markdown-body th, .markdown-body td {
             border: 1px solid var(--border);
             padding: 0.8em 1em;
             text-align: left;
+            word-break: break-word;
+            white-space: normal;
         }
         
         .markdown-body th {
@@ -508,7 +544,7 @@
                 margin: 0.25rem 0 0;
                 padding: 0.65rem 0.5rem;
             }
-            .navbar {
+            .navbar { 
                 padding: 0.75rem 1rem;
                 position: static;
                 top: auto;
@@ -516,6 +552,8 @@
             .navbar-content { flex-direction: column; align-items: stretch; }
             .navbar-controls { width: 100%; justify-content: center; gap: 0.5rem; }
             .btn { font-size: 0.9rem; padding: 0.45rem 0.8rem; }
+            .table-scroll { padding: 0.6rem; margin: 1.1rem 0; }
+            .markdown-body th, .markdown-body td { padding: 0.5em 0.7em; }
             .markdown-body h1 { font-size: 1.6em; margin-top: 0.4em; }
             .markdown-body h2 { font-size: 1.3em; margin-top: 0.7em; }
             .markdown-body h3 { font-size: 1.1em; margin-top: 0.6em; }
@@ -691,6 +729,7 @@
         let tocLinksMap = new Map();
         let currentActiveId = '';
         let pendingTOCEntries = [];
+        let tableResizeHandler = null;
 
         function getHeaderOffsetValue() {
             const cssValue = getComputedStyle(root).getPropertyValue('--header-offset');
@@ -779,6 +818,56 @@
             return [status, url, reason].filter(Boolean).join(' | ');
         }
 
+        function updateTableScrollState(wrapper) {
+            if (!wrapper) return;
+
+            const scrollable = wrapper.scrollWidth - wrapper.clientWidth > 2;
+            wrapper.classList.toggle('is-scrollable', scrollable);
+
+            if (!scrollable) {
+                wrapper.classList.remove('has-left', 'has-right');
+                return;
+            }
+
+            const atStart = wrapper.scrollLeft <= 1;
+            const atEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 1;
+
+            wrapper.classList.toggle('has-left', !atStart);
+            wrapper.classList.toggle('has-right', !atEnd);
+        }
+
+        function enhanceTables() {
+            const container = document.querySelector('.markdown-body');
+            if (!container) return;
+
+            const tables = container.querySelectorAll('table');
+            tables.forEach((table) => {
+                if (table.closest('.table-scroll')) return;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-scroll';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+
+            const wrappers = container.querySelectorAll('.table-scroll');
+            wrappers.forEach((wrapper) => {
+                updateTableScrollState(wrapper);
+
+                wrapper.addEventListener('scroll', () => updateTableScrollState(wrapper));
+            });
+
+            if (tableResizeHandler) {
+                window.removeEventListener('resize', tableResizeHandler);
+            }
+
+            tableResizeHandler = () => {
+                wrappers.forEach((wrapper) => updateTableScrollState(wrapper));
+            };
+
+            window.addEventListener('resize', tableResizeHandler, { passive: true });
+        }
+
         // Загрузка и рендеринг markdown
         async function loadMarkdown(fileKey) {
             const contentDiv = document.getElementById('content');
@@ -827,6 +916,8 @@
                 const cleanHtml = DOMPurify.sanitize(htmlWithIds);
 
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
+
+                enhanceTables();
 
                 if (sourceLabel) {
                     const notice = document.createElement('div');
