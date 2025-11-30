@@ -685,9 +685,15 @@
         const clearSearchBtn = document.getElementById('clearSearch');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
+        let userSidebarPreference = null;
+        let viewportRange = null;
 
-        function setSidebarState(isOpen) {
+        function setSidebarState(isOpen, { userInitiated = false } = {}) {
             if (!sidebarToggle) return;
+
+            if (userInitiated) {
+                userSidebarPreference = isOpen;
+            }
             document.body.classList.toggle('sidebar-open', isOpen);
             sidebarToggle.setAttribute('aria-expanded', String(isOpen));
             sidebarToggle.textContent = isOpen ? 'Скрыть содержание' : '📑 Содержание';
@@ -695,11 +701,21 @@
 
         function toggleSidebar() {
             const nextState = !document.body.classList.contains('sidebar-open');
-            setSidebarState(nextState);
+            setSidebarState(nextState, { userInitiated: true });
         }
 
         function syncSidebarForViewport() {
-            const shouldOpen = window.innerWidth > 1024;
+            const nextRange = window.innerWidth > 1024 ? 'desktop' : 'mobile';
+            const hasRangeChanged = nextRange !== viewportRange;
+
+            if (!hasRangeChanged) {
+                return;
+            }
+
+            viewportRange = nextRange;
+            userSidebarPreference = null;
+
+            const shouldOpen = nextRange === 'desktop';
             setSidebarState(shouldOpen);
         }
 
