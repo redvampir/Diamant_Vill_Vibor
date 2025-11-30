@@ -207,6 +207,15 @@
             line-height: 1.8;
         }
         
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3,
+        .markdown-body h4,
+        .markdown-body h5,
+        .markdown-body h6 {
+            scroll-margin-top: 90px;
+        }
+
         .markdown-body h1 {
             font-size: 2.2em;
             margin: 0.8em 0 0.5em;
@@ -215,19 +224,19 @@
             color: var(--text-light);
             word-break: break-word; /* avoid overflow on long titles */
         }
-        
+
         .markdown-body h2 {
             font-size: 1.8em;
             margin: 1.3em 0 0.5em;
             color: var(--accent);
         }
-        
+
         .markdown-body h3 {
             font-size: 1.5em;
             margin: 1.2em 0 0.5em;
             color: var(--text-muted);
         }
-        
+
         .markdown-body h4 {
             font-size: 1.2em;
             margin: 1em 0 0.5em;
@@ -411,15 +420,22 @@
         @media (max-width: 768px) {
             .main-content {
                 margin: 0.75rem;
-                padding: 1rem;
+                padding: 1.5rem 1rem 1rem;
             }
-            .navbar { padding: 0.75rem 1rem; }
+            .navbar {
+                padding: 0.75rem 1rem;
+                position: static;
+                top: auto;
+            }
             .navbar-content { flex-direction: column; align-items: stretch; }
             .navbar-controls { width: 100%; justify-content: center; gap: 0.5rem; }
             .btn { font-size: 0.9rem; padding: 0.45rem 0.8rem; }
-            .markdown-body h1 { font-size: 1.6em; margin-top: 0.6em; }
-            .markdown-body h2 { font-size: 1.3em; }
-            .markdown-body h3 { font-size: 1.1em; }
+            .markdown-body h1 { font-size: 1.6em; margin-top: 0.4em; }
+            .markdown-body h2 { font-size: 1.3em; margin-top: 0.7em; }
+            .markdown-body h3 { font-size: 1.1em; margin-top: 0.6em; }
+            .markdown-body h4,
+            .markdown-body h5,
+            .markdown-body h6 { margin-top: 0.6em; }
         }
 
         @media (max-width: 480px) {
