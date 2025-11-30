@@ -471,6 +471,15 @@
         .markdown-body {
             animation: fadeIn 0.5s ease-out;
         }
+
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3,
+        .markdown-body h4,
+        .markdown-body h5,
+        .markdown-body h6 {
+            scroll-margin-top: calc(var(--header-offset) + 12px);
+        }
     </style>
 </head>
 <body>
@@ -513,6 +522,22 @@
     <div class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</div>
     
     <script>
+        const root = document.documentElement;
+
+        function updateHeaderOffset() {
+            const navbar = document.querySelector('.navbar');
+            if (!navbar) return;
+
+            const extraGap = window.innerWidth <= 768 ? 10 : 14;
+            const measured = Math.ceil(navbar.getBoundingClientRect().height + extraGap);
+
+            root.style.setProperty('--header-offset', `${measured}px`);
+        }
+
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(updateHeaderOffset);
+        });
+
         // Функция для создания slug из кириллического текста
         function createSlug(text) {
             return text
@@ -718,6 +743,8 @@
         
         // Прокрутка к якорю при первой загрузке
         window.addEventListener('load', () => {
+            updateHeaderOffset();
+
             if (window.location.hash) {
                 const targetId = decodeURIComponent(window.location.hash.substring(1));
                 const target = document.getElementById(targetId);
@@ -728,8 +755,9 @@
                 }
             }
         });
-        
+
         // Инициализация
+        updateHeaderOffset();
         loadMarkdown(fileParam);
     </script>
 </body>
