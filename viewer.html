@@ -31,6 +31,18 @@
             --card-bg: #111118;          /* Фон карточек и панелей */
             --shadow: rgba(0, 0, 0, 0.35); /* Умеренные тени, чтобы не съедать акценты */
         }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
         
         html,
         body {
@@ -542,14 +554,14 @@
                 height: auto;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
-                padding: 0.5rem 0.5rem;
+                padding: 0.4rem 0.4rem;
                 margin: 0;
                 box-shadow: none;
             }
             .main-content {
                 margin: 0;
-                padding: 0.5rem;
-                padding-top: calc(0.5rem + var(--header-offset));
+                padding: 0.4rem;
+                padding-top: calc(0.4rem + var(--header-offset));
                 max-width: 100%;
                 box-sizing: border-box;
             }
@@ -564,6 +576,8 @@
             }
 
             .container,
+            .navbar,
+            .navbar-content,
             .main-content,
             .sidebar {
                 max-width: 100%;
@@ -572,22 +586,33 @@
 
             .main-content {
                 margin: 0;
-                padding: 0.45rem 0.5rem;
-                padding-top: calc(0.45rem + var(--header-offset));
+                padding: 0.35rem 0.45rem;
+                padding-top: calc(0.35rem + var(--header-offset));
             }
             .sidebar {
                 margin: 0;
-                padding: 0.4rem 0.45rem;
+                padding: 0.35rem 0.4rem;
             }
-            .navbar {
-                padding: 0.75rem 1rem;
+            .navbar { 
+                padding: 0.65rem 0.85rem;
                 position: static;
                 top: auto;
             }
             .navbar-content { flex-direction: column; align-items: stretch; }
             .navbar-controls { width: 100%; justify-content: center; gap: 0.5rem; }
             .btn { font-size: 0.9rem; padding: 0.45rem 0.8rem; }
-            .table-scroll { padding: 0.6rem; margin: 1.1rem 0; }
+            .table-scroll {
+                padding: 0.45rem 0.5rem;
+                margin: 0.9rem 0;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .table-scroll table {
+                width: 100%;
+                min-width: 100%;
+                table-layout: fixed;
+            }
             .markdown-body th, .markdown-body td {
                 padding: 0.5em;
                 word-break: break-word;
@@ -655,6 +680,7 @@
         <!-- Боковая панель -->
         <aside class="sidebar" id="sidebar">
             <div class="search-box">
+                <label class="visually-hidden" for="searchInput">Поиск по странице</label>
                 <input type="text" id="searchInput" placeholder="Поиск по странице...">
                 <span class="search-icon">🔍</span>
                 <div class="search-meta">
