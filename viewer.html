@@ -639,11 +639,16 @@
         // Получаем параметр из URL
         const urlParams = new URLSearchParams(window.location.search);
         const fileParam = urlParams.get('file') || 'glossary';
-        
+
         // Пути к файлам (сырые с GitHub)
         const files = {
             glossary: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/Глосарий_3.md',
             synopsis: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
+        };
+
+        const localFiles = {
+            glossary: '/Доп.материалы/Глосарий_3.md',
+            synopsis: '/Доп.материалы/СИНОПСИС_2.md'
         };
 
         let tocObserver;
@@ -685,24 +690,117 @@
             
             return div.innerHTML;
         }
-        
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function fetchWithRetry(url, maxAttempts = 3, baseDelayMs = 400) {
+            let lastError;
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        lastError = new Error(`HTTP ${response.status}`);
+                        lastError.status = response.status;
+                        lastError.url = url;
+                    } else {
+                        return response;
+                    }
+                } catch (error) {
+                    lastError = error;
+                    lastError.url = url;
+                }
+
+                if (attempt < maxAttempts) {
+                    const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
+                    await delay(delayMs);
+                }
+            }
+
+            throw lastError;
+        }
+
+        function renderError({ title = '⚠️ Ошибка загрузки', message, details }) {
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <h2 style="color: #e53e3e;">${title}</h2>
+                    <p>${message}</p>
+                    ${details ? `<p style="color: #a0aec0; font-size: 0.9rem;">${details}</p>` : ''}
+                </div>
+            `;
+        }
+
+        function formatErrorDetails(error) {
+            if (!error) return '';
+
+            const status = typeof error.status === 'number' ? `статус ${error.status}` : 'статус неизвестен';
+            const url = error.url ? `URL: ${error.url}` : 'URL не указан';
+            const reason = error.message ? `Причина: ${error.message}` : '';
+
+            return [status, url, reason].filter(Boolean).join(' | ');
+        }
+
         // Загрузка и рендеринг markdown
         async function loadMarkdown(fileKey) {
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка контента...</p></div>';
-            
+
+            if (!files[fileKey]) {
+                renderError({
+                    title: '⚠️ Неизвестный файл',
+                    message: `Ключ файла «${fileKey}» не поддерживается. Доступные значения: ${Object.keys(files).join(', ')}.`,
+                    details: 'Убедитесь, что параметр ?file задан корректно.'
+                });
+                return;
+            }
+
             try {
-                const response = await fetch(files[fileKey]);
-                if (!response.ok) throw new Error('Ошибка загрузки файла');
-                
-                const markdown = await response.text();
+                const remoteUrl = files[fileKey];
+                const localUrl = localFiles[fileKey];
+                let markdown;
+                let sourceLabel = '';
+
+                try {
+                    const response = await fetchWithRetry(remoteUrl, 3, 400);
+                    markdown = await response.text();
+                    sourceLabel = 'Удалённая версия';
+                } catch (remoteError) {
+                    if (!localUrl) throw remoteError;
+
+                    try {
+                        const fallbackResponse = await fetchWithRetry(localUrl, 2, 400);
+                        markdown = await fallbackResponse.text();
+                        sourceLabel = 'Локальный файл (резерв)';
+                    } catch (fallbackError) {
+                        const details = [
+                            'Основной источник: ' + formatErrorDetails(remoteError),
+                            'Резервный источник: ' + formatErrorDetails(fallbackError)
+                        ].join(' || ');
+
+                        throw new Error(details);
+                    }
+                }
+
                 const html = marked.parse(markdown);
-                
+
                 // Добавляем ID к заголовкам ПЕРЕД санитизацией
                 const htmlWithIds = addHeaderIds(html);
                 const cleanHtml = DOMPurify.sanitize(htmlWithIds);
-                
+
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
+
+                if (sourceLabel) {
+                    const notice = document.createElement('div');
+                    notice.textContent = sourceLabel;
+                    notice.style.fontSize = '0.85rem';
+                    notice.style.color = '#718096';
+                    notice.style.marginBottom = '0.5rem';
+                    contentDiv.prepend(notice);
+                }
 
                 // Генерируем оглавление
                 generateTOC();
@@ -716,13 +814,10 @@
                 updateSearchInfo({ term: searchInput?.value || '' });
 
             } catch (error) {
-                contentDiv.innerHTML = `
-                    <div style="text-align: center; padding: 3rem;">
-                        <h2 style="color: #e53e3e;">⚠️ Ошибка загрузки</h2>
-                        <p>Не удалось загрузить файл. Попробуйте обновить страницу.</p>
-                        <p style="color: #a0aec0; font-size: 0.9rem;">${error.message}</p>
-                    </div>
-                `;
+                renderError({
+                    message: 'Не удалось загрузить файл. Попробуйте обновить страницу.',
+                    details: formatErrorDetails(error)
+                });
             }
         }
         
