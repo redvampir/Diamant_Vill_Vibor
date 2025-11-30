@@ -685,21 +685,48 @@
         const clearSearchBtn = document.getElementById('clearSearch');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
+        let userSidebarPreference = null;
+        let viewportRange = null;
+        let sidebarIsOpen = null;
 
-        function setSidebarState(isOpen) {
+        function setSidebarState(isOpen, { userInitiated = false } = {}) {
             if (!sidebarToggle) return;
-            document.body.classList.toggle('sidebar-open', isOpen);
-            sidebarToggle.setAttribute('aria-expanded', String(isOpen));
-            sidebarToggle.textContent = isOpen ? 'Скрыть содержание' : '📑 Содержание';
+
+            const normalizedState = Boolean(isOpen);
+            const hasStateChanged = normalizedState !== sidebarIsOpen;
+
+            if (userInitiated) {
+                userSidebarPreference = normalizedState;
+            }
+
+            if (!hasStateChanged && userSidebarPreference === null) {
+                return;
+            }
+
+            sidebarIsOpen = normalizedState;
+            document.body.classList.toggle('sidebar-open', normalizedState);
+            sidebarToggle.setAttribute('aria-expanded', String(normalizedState));
+            sidebarToggle.textContent = normalizedState ? 'Скрыть содержание' : '📑 Содержание';
         }
 
         function toggleSidebar() {
-            const nextState = !document.body.classList.contains('sidebar-open');
-            setSidebarState(nextState);
+            const currentState = sidebarIsOpen ?? document.body.classList.contains('sidebar-open');
+            const nextState = !currentState;
+            setSidebarState(nextState, { userInitiated: true });
         }
 
         function syncSidebarForViewport() {
-            const shouldOpen = window.innerWidth > 1024;
+            const nextRange = window.innerWidth > 1024 ? 'desktop' : 'mobile';
+            const hasRangeChanged = nextRange !== viewportRange;
+
+            if (!hasRangeChanged) {
+                return;
+            }
+
+            viewportRange = nextRange;
+            userSidebarPreference = null;
+
+            const shouldOpen = nextRange === 'desktop';
             setSidebarState(shouldOpen);
         }
 
