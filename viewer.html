@@ -14,37 +14,40 @@
         }
         
         :root {
-            /* Тёмная готическая палитра */
-            --primary: #8b5cf6;        /* Фиолетовый */
-            --secondary: #4c1d95;      /* Тёмно-фиолетовый */
-            --bg-dark: #0f0f23;        /* Почти чёрный */
-            --bg-medium: #1a1a2e;      /* Тёмно-серый */
-            --bg-light: #16213e;       /* Серо-синий */
-            --text-dark: #e2e8f0;      /* Светло-серый для текста */
-            --text-light: #ffffff;     /* Белый */
-            --text-muted: #94a3b8;     /* Приглушённый серый */
-            --border: #2d3748;         /* Тёмная граница */
-            --accent: #a78bfa;         /* Светло-фиолетовый акцент */
-            --accent-hover: #c4b5fd;   /* Ещё светлее при наведении */
-            --card-bg: #1e293b;        /* Фон карточек */
-            --shadow: rgba(0, 0, 0, 0.5); /* Тени */
+            /* Ночная палитра с красно-оранжевыми акцентами */
+            --primary: #e53935;          /* Красный акцент */
+            --secondary: #ff8f00;        /* Оранжевый градиент */
+            --bg-dark: #0a0a0f;          /* Почти чёрный фон */
+            --bg-medium: #141419;        /* Тёмный блок */
+            --bg-light: #1b1b23;         /* Подложка для контента */
+            --text-dark: #f3f4f6;        /* Основной светлый текст */
+            --text-light: #ffffff;       /* Чисто белый */
+            --text-muted: #caced8;       /* Приглушённый серый */
+            --border: #2d2d36;           /* Контур для отделения блоков */
+            --accent: #ff7043;           /* Тёплый оранжевый акцент */
+            --accent-hover: #ffb74d;     /* Светлый оранжевый для ховеров */
+            --card-bg: #111118;          /* Фон карточек и панелей */
+            --shadow: rgba(0, 0, 0, 0.35); /* Умеренные тени, чтобы не съедать акценты */
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             line-height: 1.6;
             color: var(--text-dark);
-            background: var(--bg-dark);
+            background: radial-gradient(circle at 20% 20%, rgba(229, 57, 53, 0.2), transparent 35%),
+                        radial-gradient(circle at 80% 0%, rgba(255, 143, 0, 0.18), transparent 30%),
+                        var(--bg-dark);
         }
         
         /* Навигация */
         .navbar {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             padding: 1rem 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 14px rgba(229, 57, 53, 0.25);
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-bottom: 1px solid rgba(255, 143, 0, 0.35);
         }
         
         .navbar-content {
@@ -85,22 +88,25 @@
         }
         
         .btn-light {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
             color: var(--text-light);
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 183, 77, 0.5);
         }
-        
+
         .btn-light:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 183, 77, 0.15);
+            box-shadow: 0 0 0 3px rgba(255, 183, 77, 0.15);
         }
-        
+
         .btn-primary {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
             color: var(--text-light);
+            border: 1px solid rgba(255, 183, 77, 0.5);
         }
-        
+
         .btn-primary:hover {
-            background: var(--accent-hover);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent-hover) 100%);
+            box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2);
         }
         
         /* Боковая панель навигации */
@@ -120,6 +126,7 @@
             position: sticky;
             top: 70px;
             height: calc(100vh - 70px);
+            box-shadow: inset -1px 0 0 rgba(255, 112, 67, 0.15);
         }
         
         .sidebar h3 {
@@ -145,10 +152,10 @@
             transition: all 0.2s;
             font-size: 0.9rem;
         }
-        
+
         .toc a:hover {
             background: var(--bg-medium);
-            color: var(--accent);
+            color: var(--accent-hover);
             padding-left: 1rem;
         }
         
@@ -156,16 +163,18 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: var(--text-light);
             padding-left: 1rem;
+            box-shadow: 0 4px 10px rgba(255, 112, 67, 0.2);
         }
         
         /* Основной контент */
         .main-content {
             flex: 1;
             padding: 2rem;
-            background: var(--bg-light);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0) 40%), var(--bg-light);
             margin: 2rem;
             border-radius: 12px;
-            box-shadow: 0 4px 12px var(--shadow);
+            box-shadow: 0 10px 30px var(--shadow);
+            border: 1px solid rgba(255, 112, 67, 0.2);
         }
         
         /* Индикатор загрузки */
@@ -202,8 +211,8 @@
             font-size: 2.2em;
             margin: 0.8em 0 0.5em;
             padding-bottom: 0.3em;
-            border-bottom: 2px solid var(--border);
-            color: var(--primary);
+            border-bottom: 2px solid rgba(255, 112, 67, 0.4);
+            color: var(--text-light);
             word-break: break-word; /* avoid overflow on long titles */
         }
         
@@ -241,9 +250,10 @@
         .markdown-body blockquote {
             margin: 1.5em 0;
             padding: 1em 1.5em;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(76, 29, 149, 0.15) 100%);
+            background: linear-gradient(135deg, rgba(229, 57, 53, 0.15) 0%, rgba(255, 112, 67, 0.15) 100%);
             border-left: 4px solid var(--primary);
             border-radius: 4px;
+            color: var(--text-dark);
         }
         
         .markdown-body table {
@@ -271,22 +281,23 @@
         }
         
         .markdown-body code {
-            background: var(--card-bg);
+            background: #1f1f29;
             padding: 0.2em 0.4em;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
-            color: var(--accent);
+            color: var(--accent-hover);
         }
         
         .markdown-body pre {
-            background: var(--bg-dark);
-            color: var(--text-muted);
+            background: #0d0d14;
+            color: var(--text-dark);
             padding: 1em;
             border-radius: 6px;
             overflow-x: auto;
             margin: 1.5em 0;
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255, 112, 67, 0.25);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
         }
         
         .markdown-body pre code {
@@ -300,10 +311,12 @@
             text-decoration: none;
             border-bottom: 1px solid transparent;
             transition: all 0.2s;
+            font-weight: 600;
         }
-        
+
         .markdown-body a:hover {
-            border-bottom: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent-hover);
+            color: var(--accent-hover);
         }
         
         .markdown-body hr {
@@ -326,10 +339,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 24px rgba(229, 57, 53, 0.3);
             opacity: 0;
             transition: opacity 0.3s, transform 0.3s;
             font-size: 1.5rem;
+            border: 1px solid rgba(255, 183, 77, 0.5);
         }
         
         .scroll-top.visible {
@@ -355,6 +369,7 @@
             background: var(--bg-medium);
             color: var(--text-dark);
             transition: all 0.3s;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
         }
         
         .search-box input::placeholder {
@@ -363,8 +378,8 @@
         
         .search-box input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.25);
         }
         
         .search-icon {
