@@ -728,20 +728,31 @@
         const sidebar = document.getElementById('sidebar');
         let userSidebarPreference = null;
         let viewportRange = null;
+        let sidebarIsOpen = null;
 
         function setSidebarState(isOpen, { userInitiated = false } = {}) {
             if (!sidebarToggle) return;
 
+            const normalizedState = Boolean(isOpen);
+            const hasStateChanged = normalizedState !== sidebarIsOpen;
+
             if (userInitiated) {
-                userSidebarPreference = isOpen;
+                userSidebarPreference = normalizedState;
             }
-            document.body.classList.toggle('sidebar-open', isOpen);
-            sidebarToggle.setAttribute('aria-expanded', String(isOpen));
-            sidebarToggle.textContent = isOpen ? 'Скрыть содержание' : '📑 Содержание';
+
+            if (!hasStateChanged && userSidebarPreference === null) {
+                return;
+            }
+
+            sidebarIsOpen = normalizedState;
+            document.body.classList.toggle('sidebar-open', normalizedState);
+            sidebarToggle.setAttribute('aria-expanded', String(normalizedState));
+            sidebarToggle.textContent = normalizedState ? 'Скрыть содержание' : '📑 Содержание';
         }
 
         function toggleSidebar() {
-            const nextState = !document.body.classList.contains('sidebar-open');
+            const currentState = sidebarIsOpen ?? document.body.classList.contains('sidebar-open');
+            const nextState = !currentState;
             setSidebarState(nextState, { userInitiated: true });
         }
 
