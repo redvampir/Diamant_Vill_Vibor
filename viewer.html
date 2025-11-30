@@ -376,7 +376,7 @@
             margin-bottom: 1rem;
             position: relative;
         }
-        
+
         .search-box input {
             width: 100%;
             padding: 0.7rem 2.5rem 0.7rem 1rem;
@@ -398,13 +398,51 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.25);
         }
-        
+
         .search-icon {
             position: absolute;
             right: 1rem;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
+        }
+
+        .search-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-top: 0.35rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .search-info {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .btn-clear {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg-medium);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-clear:hover {
+            border-color: var(--accent);
+            color: var(--accent-hover);
+        }
+
+        .btn-clear:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         /* Мобильная адаптация */
@@ -504,6 +542,10 @@
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Поиск по странице...">
                 <span class="search-icon">🔍</span>
+                <div class="search-meta">
+                    <span id="searchInfo" class="search-info">Введите ≥2 символа</span>
+                    <button type="button" id="clearSearch" class="btn-clear" aria-label="Очистить подсветку" disabled>Очистить</button>
+                </div>
             </div>
             <h3>Содержание</h3>
             <ul class="toc" id="toc"></ul>
@@ -523,6 +565,13 @@
     
     <script>
         const root = document.documentElement;
+        const searchInput = document.getElementById('searchInput');
+        const searchInfo = document.getElementById('searchInfo');
+        const clearSearchBtn = document.getElementById('clearSearch');
+
+        function escapeRegExp(value) {
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\$&');
+        }
 
         function updateHeaderOffset() {
             const navbar = document.querySelector('.navbar');
@@ -612,16 +661,18 @@
                 const cleanHtml = DOMPurify.sanitize(htmlWithIds);
                 
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
-                
+
                 // Генерируем оглавление
                 generateTOC();
-                
+
                 // Настраиваем якорные ссылки
                 setupAnchorLinks();
-                
+
                 // Подсветка кода (если есть)
                 highlightCode();
-                
+
+                updateSearchInfo({ term: searchInput?.value || '' });
+
             } catch (error) {
                 contentDiv.innerHTML = `
                     <div style="text-align: center; padding: 3rem;">
@@ -690,29 +741,149 @@
                 block.style.display = 'block';
             });
         }
-        
+
         // Смена файла
         function changeFile(fileKey) {
             window.location.search = `?file=${fileKey}`;
         }
-        
-        // Поиск по странице
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const content = document.querySelector('.markdown-body');
-            
-            if (searchTerm.length < 2) {
-                // Сбросить подсветку
+
+        function updateSearchInfo({ count = 0, term = '', state = 'idle' }) {
+            if (!searchInfo) return;
+
+            const contentAvailable = !!document.querySelector('.markdown-body');
+            const hasHighlights = !!document.querySelector('.markdown-body mark[data-highlight]');
+            const allowClear = contentAvailable && (hasHighlights || (term && term.length >= 2));
+
+            if (clearSearchBtn) {
+                clearSearchBtn.disabled = !allowClear;
+            }
+
+            if (state === 'no-content') {
+                searchInfo.textContent = 'Контент недоступен';
                 return;
             }
-            
-            // Простой поиск (можно улучшить)
-            const textContent = content.textContent.toLowerCase();
-            if (textContent.includes(searchTerm)) {
-                // Найдено - можно подсветить
-                window.find(searchTerm);
+
+            if (!term || term.length < 2) {
+                searchInfo.textContent = 'Введите ≥2 символа';
+                return;
             }
-        });
+
+            searchInfo.textContent = count > 0 ? `Совпадений: ${count}` : 'Совпадений не найдено';
+        }
+
+        function clearSearchHighlights({ resetInput = false, scroll = false } = {}) {
+            const content = document.querySelector('.markdown-body');
+
+            if (content) {
+                content.querySelectorAll('mark[data-highlight]').forEach((mark) => {
+                    const parent = mark.parentNode;
+                    if (!parent) return;
+                    parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                    parent.normalize();
+                });
+                content.normalize();
+            } else {
+                updateSearchInfo({ state: 'no-content' });
+            }
+
+            if (resetInput && searchInput) {
+                searchInput.value = '';
+            }
+
+            updateSearchInfo({ term: searchInput?.value || '' });
+
+            if (scroll) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function highlightMatches(term) {
+            const content = document.querySelector('.markdown-body');
+            if (!content) {
+                updateSearchInfo({ state: 'no-content' });
+                return;
+            }
+
+            const preparedTerm = term.trim();
+            if (preparedTerm.length < 2) {
+                clearSearchHighlights();
+                return;
+            }
+
+            const regex = new RegExp(escapeRegExp(preparedTerm), 'gi');
+            const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null);
+            const textNodes = [];
+            let node;
+
+            clearSearchHighlights();
+
+            while ((node = walker.nextNode())) {
+                if (node.parentElement && node.parentElement.closest('mark[data-highlight]')) {
+                    continue;
+                }
+                textNodes.push(node);
+            }
+
+            let matchesCount = 0;
+
+            textNodes.forEach((textNode) => {
+                const { nodeValue } = textNode;
+                if (!nodeValue || !nodeValue.trim()) return;
+
+                const fragments = [];
+                let lastIndex = 0;
+                let match;
+
+                while ((match = regex.exec(nodeValue)) !== null) {
+                    const start = match.index || 0;
+                    const end = start + match[0].length;
+
+                    if (start > lastIndex) {
+                        fragments.push(document.createTextNode(nodeValue.slice(lastIndex, start)));
+                    }
+
+                    const mark = document.createElement('mark');
+                    mark.setAttribute('data-highlight', '');
+                    mark.textContent = nodeValue.slice(start, end);
+                    fragments.push(mark);
+
+                    lastIndex = end;
+                    matchesCount += 1;
+                }
+
+                if (fragments.length === 0) return;
+
+                if (lastIndex < nodeValue.length) {
+                    fragments.push(document.createTextNode(nodeValue.slice(lastIndex)));
+                }
+
+                const fragment = document.createDocumentFragment();
+                fragments.forEach((item) => fragment.appendChild(item));
+
+                textNode.parentNode.replaceChild(fragment, textNode);
+            });
+
+            content.normalize();
+            updateSearchInfo({ count: matchesCount, term: preparedTerm });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value || '';
+                if (searchTerm.trim().length < 2) {
+                    clearSearchHighlights();
+                    return;
+                }
+
+                highlightMatches(searchTerm.toLowerCase());
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                clearSearchHighlights({ resetInput: true, scroll: true });
+            });
+        }
         
         // Кнопка "Вверх"
         const scrollTopBtn = document.getElementById('scrollTop');
