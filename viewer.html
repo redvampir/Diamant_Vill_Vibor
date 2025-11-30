@@ -31,6 +31,18 @@
             --card-bg: #111118;          /* Фон карточек и панелей */
             --shadow: rgba(0, 0, 0, 0.35); /* Умеренные тени, чтобы не съедать акценты */
         }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
         
         html,
         body {
@@ -655,6 +667,7 @@
         <!-- Боковая панель -->
         <aside class="sidebar" id="sidebar">
             <div class="search-box">
+                <label class="visually-hidden" for="searchInput">Поиск по странице</label>
                 <input type="text" id="searchInput" placeholder="Поиск по странице...">
                 <span class="search-icon">🔍</span>
                 <div class="search-meta">
