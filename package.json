@@ -1,0 +1,17 @@
+{
+  "name": "diamant_vill_vibor",
+  "version": "1.0.0",
+  "description": "UI-тесты для проверки отображения сайта на десктопе и мобильных устройствах",
+  "license": "Unlicense",
+  "type": "commonjs",
+  "scripts": {
+    "test": "playwright test",
+    "test:ci": "npx playwright install --with-deps chromium && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "dompurify": "^3.3.0",
+    "marked": "^17.0.1",
+    "serve": "^14.2.1"
+  }
+}
