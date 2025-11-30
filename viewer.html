@@ -855,6 +855,39 @@
             }
         };
 
+        // Минимальные тестовые данные для локального запуска (Playwright/CI)
+        const testFileSources = {
+            glossary: {
+                local: './tests/fixtures/glossary.md'
+            },
+            synopsis: {
+                local: './tests/fixtures/synopsis.md'
+            }
+        };
+
+        function isLocalhost() {
+            const host = window.location.hostname;
+            return host === 'localhost' || host === '127.0.0.1';
+        }
+
+        function buildSourceAttempts(fileKey) {
+            const attempts = [];
+
+            if (isLocalhost() && testFileSources[fileKey]?.local) {
+                attempts.push({ label: 'Тестовая версия', url: testFileSources[fileKey].local, attempts: 1 });
+            }
+
+            if (fileSources[fileKey]?.local) {
+                attempts.push({ label: 'Локальная версия', url: fileSources[fileKey].local, attempts: 2 });
+            }
+
+            if (fileSources[fileKey]?.remote) {
+                attempts.push({ label: 'Удалённая версия', url: fileSources[fileKey].remote, attempts: 3 });
+            }
+
+            return attempts;
+        }
+
         let tocObserver;
         let headingsCache = [];
         let tocLinksMap = new Map();
@@ -1018,11 +1051,12 @@
             try {
                 let markdown;
                 let sourceLabel = '';
-                const attempts = [
-                    { label: 'Локальная версия', url: sources.local, attempts: 2 },
-                    { label: 'Удалённая версия', url: sources.remote, attempts: 3 }
-                ].filter((item) => Boolean(item.url));
+                const attempts = buildSourceAttempts(fileKey);
                 const errors = [];
+
+                if (!attempts.length) {
+                    throw new Error('Нет доступных источников для загрузки файла');
+                }
 
                 for (const attempt of attempts) {
                     try {
