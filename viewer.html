@@ -583,9 +583,39 @@
             root.style.setProperty('--header-offset', `${measured}px`);
         }
 
-        window.addEventListener('resize', () => {
-            requestAnimationFrame(updateHeaderOffset);
-        });
+        function throttle(fn, delay = 120) {
+            let lastCall = 0;
+            let timeoutId;
+            let trailingArgs;
+
+            return (...args) => {
+                const now = Date.now();
+                const remaining = delay - (now - lastCall);
+                trailingArgs = args;
+
+                if (remaining <= 0) {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                        timeoutId = null;
+                    }
+                    lastCall = now;
+                    fn(...args);
+                } else if (!timeoutId) {
+                    timeoutId = setTimeout(() => {
+                        lastCall = Date.now();
+                        timeoutId = null;
+                        fn(...trailingArgs);
+                    }, remaining);
+                }
+            };
+        }
+
+        window.addEventListener('resize', throttle(() => {
+            requestAnimationFrame(() => {
+                updateHeaderOffset();
+                setupTOCObserver();
+            });
+        }, 150));
 
         // Функция для создания slug из кириллического текста
         function createSlug(text) {
@@ -615,6 +645,18 @@
             glossary: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/Глосарий_3.md',
             synopsis: 'https://raw.githubusercontent.com/redvampir/Diamant_Vill_Vibor/main/Доп.материалы/СИНОПСИС_2.md'
         };
+
+        let tocObserver;
+        let headingsCache = [];
+        let tocLinksMap = new Map();
+        let currentActiveId = '';
+        let pendingTOCEntries = [];
+
+        function getHeaderOffsetValue() {
+            const cssValue = getComputedStyle(root).getPropertyValue('--header-offset');
+            const numericValue = parseInt(cssValue, 10);
+            return Number.isFinite(numericValue) ? numericValue : 0;
+        }
         
         // Функция для добавления ID к заголовкам после рендеринга
         function addHeaderIds(htmlContent) {
@@ -688,9 +730,10 @@
         function generateTOC() {
             const toc = document.getElementById('toc');
             const headings = document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3');
-            
+
             toc.innerHTML = '';
-            
+            tocLinksMap = new Map();
+
             headings.forEach((heading, index) => {
                 const level = parseInt(heading.tagName[1]);
                 const text = heading.textContent;
@@ -707,15 +750,15 @@
                 a.onclick = (e) => {
                     e.preventDefault();
                     document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-                    
-                    // Подсветка активного пункта
-                    document.querySelectorAll('.toc a').forEach(link => link.classList.remove('active'));
-                    a.classList.add('active');
+                    setActiveLinkById(id);
                 };
-                
+
                 li.appendChild(a);
                 toc.appendChild(li);
+                tocLinksMap.set(id, a);
             });
+
+            setupTOCObserver();
         }
         
         // Настройка якорных ссылок
@@ -740,6 +783,95 @@
                 // Здесь можно добавить библиотеку подсветки синтаксиса
                 block.style.display = 'block';
             });
+        }
+
+        function setActiveLinkById(id, { updateHash = true } = {}) {
+            if (!id || currentActiveId === id) return;
+
+            document.querySelectorAll('.toc a').forEach(link => link.classList.remove('active'));
+
+            const link = tocLinksMap.get(id);
+            if (link) {
+                link.classList.add('active');
+            }
+
+            currentActiveId = id;
+
+            const encodedHash = `#${encodeURIComponent(id)}`;
+            if (updateHash && window.location.hash !== encodedHash) {
+                history.replaceState(null, '', encodedHash);
+            }
+        }
+
+        function disconnectTOCObserver() {
+            if (tocObserver) {
+                tocObserver.disconnect();
+                tocObserver = null;
+            }
+            pendingTOCEntries = [];
+        }
+
+        function processTOCEntries(entries) {
+            const visibleHeadings = [];
+
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    visibleHeadings.push(entry.target);
+                }
+            });
+
+            if (visibleHeadings.length === 0) {
+                const closest = headingsCache
+                    .map((heading) => ({
+                        id: heading.id,
+                        distance: Math.abs(heading.getBoundingClientRect().top)
+                    }))
+                    .sort((a, b) => a.distance - b.distance)[0];
+
+                if (closest?.id) {
+                    setActiveLinkById(closest.id);
+                }
+                return;
+            }
+
+            visibleHeadings.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+            const current = visibleHeadings[0];
+
+            if (current?.id) {
+                setActiveLinkById(current.id);
+            }
+        }
+
+        const flushTOCEntries = throttle(() => {
+            const entriesToProcess = pendingTOCEntries.splice(0, pendingTOCEntries.length);
+            if (entriesToProcess.length) {
+                processTOCEntries(entriesToProcess);
+            }
+        }, 120);
+
+        function onTOCIntersection(entries) {
+            pendingTOCEntries.push(...entries);
+            flushTOCEntries();
+        }
+
+        function setupTOCObserver() {
+            disconnectTOCObserver();
+
+            headingsCache = Array.from(document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3'));
+            tocLinksMap = new Map(
+                Array.from(document.querySelectorAll('.toc a')).map((link) => [decodeURIComponent(link.hash.substring(1)), link])
+            );
+
+            if (!headingsCache.length || !tocLinksMap.size) return;
+
+            const marginTop = getHeaderOffsetValue() + 12;
+
+            tocObserver = new IntersectionObserver(onTOCIntersection, {
+                rootMargin: `-${marginTop}px 0px -60% 0px`,
+                threshold: [0, 0.25, 0.5, 0.75, 1]
+            });
+
+            headingsCache.forEach((heading) => tocObserver.observe(heading));
         }
 
         // Смена файла
@@ -907,6 +1039,7 @@
                 if (target) {
                     setTimeout(() => {
                         target.scrollIntoView({ behavior: 'smooth' });
+                        setActiveLinkById(targetId, { updateHash: false });
                     }, 100); // Даём время на рендер
                 }
             }
@@ -922,6 +1055,7 @@
                 if (target) {
                     setTimeout(() => {
                         target.scrollIntoView({ behavior: 'smooth' });
+                        setActiveLinkById(targetId, { updateHash: false });
                     }, 300); // Даём больше времени для полной загрузки контента
                 }
             }
