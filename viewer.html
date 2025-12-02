@@ -153,8 +153,12 @@
         .container {
             display: flex;
             max-width: 1600px;
+            width: 100%;
             margin: 0 auto;
             min-height: calc(100vh - var(--header-offset));
+            padding: 1.5rem;
+            gap: 1.5rem;
+            box-sizing: border-box;
         }
         
         .sidebar {
@@ -211,7 +215,7 @@
             flex: 1;
             padding: 1.5rem;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0) 40%), var(--bg-light);
-            margin: 1.5rem;
+            margin: 0;
             border-radius: 12px;
             box-shadow: 0 10px 30px var(--shadow);
             border: 1px solid rgba(255, 112, 67, 0.2);
@@ -899,6 +903,17 @@
             return Number.isFinite(numericValue) ? numericValue : 0;
         }
         
+        function scrollToTarget(target, { behavior = 'smooth' } = {}) {
+            if (!target) return;
+
+            const offset = getHeaderOffsetValue();
+            const targetY = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+                top: Math.max(0, targetY),
+                behavior
+            });
+        }
+
         // Функция для добавления ID к заголовкам после рендеринга
         function addHeaderIds(htmlContent) {
             const div = document.createElement('div');
@@ -1128,9 +1143,10 @@
                 const a = document.createElement('a');
                 a.href = `#${id}`;
                 a.textContent = text;
+                const headingElement = heading;
                 a.onclick = (e) => {
                     e.preventDefault();
-                    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+                    scrollToTarget(headingElement);
                     setActiveLinkById(id);
                 };
 
@@ -1157,7 +1173,10 @@
                     const targetId = decodeURIComponent(link.getAttribute('href').substring(1)); // Декодируем URL-кодированные символы
                     const target = document.getElementById(targetId);
                     if (target) {
-                        target.scrollIntoView({ behavior: 'smooth' });
+                        scrollToTarget(target);
+                        if (tocLinksMap.has(targetId)) {
+                            setActiveLinkById(targetId);
+                        }
                     } else {
                         console.warn('Якорь не найден:', targetId);
                     }
@@ -1436,7 +1455,7 @@
                 const target = document.getElementById(targetId);
                 if (target) {
                     setTimeout(() => {
-                        target.scrollIntoView({ behavior: 'smooth' });
+                        scrollToTarget(target);
                         setActiveLinkById(targetId, { updateHash: false });
                     }, 100); // Даём время на рендер
                 }
@@ -1452,7 +1471,7 @@
                 const target = document.getElementById(targetId);
                 if (target) {
                     setTimeout(() => {
-                        target.scrollIntoView({ behavior: 'smooth' });
+                        scrollToTarget(target);
                         setActiveLinkById(targetId, { updateHash: false });
                     }, 300); // Даём больше времени для полной загрузки контента
                 }
