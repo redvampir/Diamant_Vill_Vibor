@@ -877,7 +877,7 @@
                 .toLowerCase()
                 .trim()
                 .replace(/\s+/g, '-')
-                .replace(/[^\w\-]+/g, '-')
+                .replace(/[^\w\u0400-\u04FF-]+/gu, '-')  // Поддержка кириллицы (\u0400-\u04FF)
                 .replace(/--+/g, '-')
                 .replace(/^-+|-+$/g, '');
         }
@@ -904,6 +904,11 @@
             const seen = new Map();
 
             headings.forEach((heading) => {
+                // Не перезаписываем кастомные ID (установленные через {#custom-id})
+                if (heading.id && heading.id.trim() !== '') {
+                    return;
+                }
+
                 const base = createSlug(heading.textContent || '') || 'section';
                 const count = seen.get(base) || 0;
                 const id = count === 0 ? base : `${base}-${count + 1}`;
