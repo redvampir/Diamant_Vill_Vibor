@@ -898,6 +898,19 @@
                 node.nodeValue = cleaned.trimStart();
             }
         }
+
+        function normalizeHeadingIds() {
+            const headings = document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3');
+            const seen = new Map();
+
+            headings.forEach((heading) => {
+                const base = createSlug(heading.textContent || '') || 'section';
+                const count = seen.get(base) || 0;
+                const id = count === 0 ? base : `${base}-${count + 1}`;
+                seen.set(base, count + 1);
+                heading.id = id;
+            });
+        }
         // Простая конфигурация marked.js без кастомных рендереров
         marked.setOptions({
             breaks: true,
@@ -1159,6 +1172,7 @@
 
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
                 stripTechnicalTokens();
+                normalizeHeadingIds();
 
                 enhanceTables();
 
