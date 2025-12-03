@@ -882,8 +882,21 @@
                 .replace(/^-+|-+$/g, '');
         }
 
-        function removeTechnicalTags(html) {
-            return html.replace(/#char-[\w-]+/gi, '');
+        function stripTechnicalTokens() {
+            const container = document.querySelector('.markdown-body');
+            if (!container) return;
+
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            const pattern = /#char-[\w-]+/gi;
+            const whitespace = /\s{2,}/g;
+
+            let node;
+            while ((node = walker.nextNode())) {
+                const value = node.nodeValue;
+                if (!value || !pattern.test(value)) continue;
+                const cleaned = value.replace(pattern, '').replace(whitespace, ' ');
+                node.nodeValue = cleaned.trimStart();
+            }
         }
         // Простая конфигурация marked.js без кастомных рендереров
         marked.setOptions({
@@ -1142,10 +1155,10 @@
 
                 // Добавляем ID к заголовкам ПЕРЕД санитизацией
             const htmlWithIds = addHeaderIds(html);
-            const sanitizedText = removeTechnicalTags(htmlWithIds);
-            const cleanHtml = DOMPurify.sanitize(sanitizedText);
+            const cleanHtml = DOMPurify.sanitize(htmlWithIds);
 
                 contentDiv.innerHTML = `<div class="markdown-body">${cleanHtml}</div>`;
+                stripTechnicalTokens();
 
                 enhanceTables();
 
