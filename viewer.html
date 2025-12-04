@@ -567,6 +567,77 @@
             cursor: not-allowed;
         }
 
+        /* Навигация по результатам поиска */
+        .search-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-medium);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .search-nav-btn {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(229, 57, 53, 0.15), rgba(255, 112, 67, 0.15));
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .search-nav-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 112, 67, 0.3);
+        }
+
+        .search-nav-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .search-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .match-counter {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            white-space: nowrap;
+            min-width: 3rem;
+            text-align: center;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Стили для подсветки результатов поиска */
+        mark[data-highlight] {
+            background: rgba(255, 183, 77, 0.3);
+            color: var(--text-light);
+            padding: 0.1em 0.2em;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        mark[data-highlight].current-match {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--text-light);
+            box-shadow: 0 0 0 2px rgba(255, 183, 77, 0.5);
+            font-weight: 600;
+        }
+
         .sidebar-toggle {
             display: none;
             width: 100%;
@@ -751,7 +822,18 @@
                 <span class="search-icon">🔍</span>
                 <div class="search-meta">
                     <span id="searchInfo" class="search-info">Введите ≥2 символа</span>
-                    <button type="button" id="clearSearch" class="btn-clear" aria-label="Очистить подсветку" disabled>Очистить</button>
+                    <div class="search-controls">
+                        <button type="button" id="clearSearch" class="btn-clear" aria-label="Очистить подсветку" disabled>Очистить</button>
+                    </div>
+                </div>
+                <div class="search-navigation" id="searchNavigation" style="display: none;">
+                    <button type="button" id="prevMatch" class="search-nav-btn" aria-label="Предыдущий результат" disabled>
+                        <span aria-hidden="true">↑</span> Пред.
+                    </button>
+                    <span id="matchCounter" class="match-counter">0 / 0</span>
+                    <button type="button" id="nextMatch" class="search-nav-btn" aria-label="Следующий результат" disabled>
+                        След. <span aria-hidden="true">↓</span>
+                    </button>
                 </div>
             </div>
             <h3>Содержание</h3>
@@ -775,11 +857,17 @@
         const searchInput = document.getElementById('searchInput');
         const searchInfo = document.getElementById('searchInfo');
         const clearSearchBtn = document.getElementById('clearSearch');
+        const searchNavigation = document.getElementById('searchNavigation');
+        const prevMatchBtn = document.getElementById('prevMatch');
+        const nextMatchBtn = document.getElementById('nextMatch');
+        const matchCounter = document.getElementById('matchCounter');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
         let userSidebarPreference = null;
         let viewportRange = null;
         let sidebarIsOpen = null;
+        let searchMatches = [];
+        let currentMatchIndex = -1;
 
         function setSidebarState(isOpen, { userInitiated = false } = {}) {
             if (!sidebarToggle) return;
@@ -1421,6 +1509,75 @@
             }
         }
 
+        function scrollToMatch(match, smooth = true) {
+            if (!match) return;
+
+            const offset = getHeaderOffsetValue() + 20;
+            const rect = match.getBoundingClientRect();
+            const targetY = window.pageYOffset + rect.top - offset;
+
+            window.scrollTo({
+                top: Math.max(0, targetY),
+                behavior: smooth ? 'smooth' : 'auto'
+            });
+        }
+
+        function updateCurrentMatch(index) {
+            if (searchMatches.length === 0) {
+                currentMatchIndex = -1;
+                if (matchCounter) matchCounter.textContent = '0 / 0';
+                if (searchNavigation) searchNavigation.style.display = 'none';
+                if (prevMatchBtn) prevMatchBtn.disabled = true;
+                if (nextMatchBtn) nextMatchBtn.disabled = true;
+                return;
+            }
+
+            // Убираем класс current-match со всех элементов
+            searchMatches.forEach(m => m.classList.remove('current-match'));
+
+            // Устанавливаем текущий индекс
+            currentMatchIndex = index;
+
+            // Добавляем класс к текущему элементу
+            const currentMatch = searchMatches[currentMatchIndex];
+            if (currentMatch) {
+                currentMatch.classList.add('current-match');
+                scrollToMatch(currentMatch);
+            }
+
+            // Обновляем счетчик и кнопки
+            if (matchCounter) {
+                matchCounter.textContent = `${currentMatchIndex + 1} / ${searchMatches.length}`;
+            }
+
+            if (searchNavigation) {
+                searchNavigation.style.display = 'flex';
+            }
+
+            if (prevMatchBtn) {
+                prevMatchBtn.disabled = currentMatchIndex <= 0;
+            }
+
+            if (nextMatchBtn) {
+                nextMatchBtn.disabled = currentMatchIndex >= searchMatches.length - 1;
+            }
+        }
+
+        function navigateMatch(direction) {
+            if (searchMatches.length === 0) return;
+
+            let newIndex = currentMatchIndex + direction;
+
+            // Зацикливание
+            if (newIndex < 0) {
+                newIndex = searchMatches.length - 1;
+            } else if (newIndex >= searchMatches.length) {
+                newIndex = 0;
+            }
+
+            updateCurrentMatch(newIndex);
+        }
+
         function highlightMatches(term) {
             const content = document.querySelector('.markdown-body');
             if (!content) {
@@ -1431,6 +1588,9 @@
             const preparedTerm = term.trim();
             if (preparedTerm.length < 2) {
                 clearSearchHighlights();
+                searchMatches = [];
+                currentMatchIndex = -1;
+                if (searchNavigation) searchNavigation.style.display = 'none';
                 return;
             }
 
@@ -1440,6 +1600,8 @@
             let node;
 
             clearSearchHighlights();
+            searchMatches = [];
+            currentMatchIndex = -1;
 
             while ((node = walker.nextNode())) {
                 if (node.parentElement && node.parentElement.closest('mark[data-highlight]')) {
@@ -1470,6 +1632,7 @@
                     mark.setAttribute('data-highlight', '');
                     mark.textContent = nodeValue.slice(start, end);
                     fragments.push(mark);
+                    searchMatches.push(mark);
 
                     lastIndex = end;
                     matchesCount += 1;
@@ -1489,6 +1652,13 @@
 
             content.normalize();
             updateSearchInfo({ count: matchesCount, term: preparedTerm });
+
+            // Автоматически переходим к первому результату
+            if (searchMatches.length > 0) {
+                updateCurrentMatch(0);
+            } else {
+                if (searchNavigation) searchNavigation.style.display = 'none';
+            }
         }
 
         if (searchInput) {
@@ -1506,6 +1676,35 @@
         if (clearSearchBtn) {
             clearSearchBtn.addEventListener('click', () => {
                 clearSearchHighlights({ resetInput: true, scroll: true });
+                searchMatches = [];
+                currentMatchIndex = -1;
+                if (searchNavigation) searchNavigation.style.display = 'none';
+            });
+        }
+
+        if (prevMatchBtn) {
+            prevMatchBtn.addEventListener('click', () => {
+                navigateMatch(-1);
+            });
+        }
+
+        if (nextMatchBtn) {
+            nextMatchBtn.addEventListener('click', () => {
+                navigateMatch(1);
+            });
+        }
+
+        // Навигация по результатам с клавиатуры (Enter и Shift+Enter)
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && searchMatches.length > 0) {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        navigateMatch(-1);
+                    } else {
+                        navigateMatch(1);
+                    }
+                }
             });
         }
 
